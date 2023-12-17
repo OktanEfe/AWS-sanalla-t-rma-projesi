@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="images/logo.png" type="image/png">
+    <title>CHMOD Hesaplayıcı</title>
+    
+    <style>
+        body {
+
+            font-family: Arial, sans-serif;
+            background-color: #f8f8f8;
+            margin: 0;
+            padding: 0;
+            background-image: url('images/arkaplan.jpg');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed; 
+            background-color: #ffffff;
+            background-size: 1920px 1080px;
+
+        }
+
+        header {
+
+            background-color: #333;
+            color:white;
+            padding: 20px;
+            text-align: center;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        th, td {
+            border: 5px solid rgb(70, 70, 70);
+            padding: 15px;
+            text-align: center;
+            font-size: 16px;
+            font-weight: bold
+            
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+        }
+
+        label {
+            font-weight: bold;
+            font-size: 16px;
+            color: rgb(0, 0, 0);
+            font-family: 'Arial', sans-serif;
+        }
+
+        #resultUser, #resultGroup, #resultOthers, #resultTotal {
+            font-size: px;
+            font-weight: bold;
+            color: white;
+            font-family: 'Helvetica', sans-serif;
+        }
+
+        #downloadButton {
+            margin-top: 20px;
+            padding: 20px;
+            font-size: 16px;
+            background-color: #ff0000;
+            color: white;
+            border: none;
+            border-radius: 105px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>CHMOD Hesaplayıcı</h1>
+    <form action="#">
+        <table>
+            <thead>
+                <tr>
+                    <th>Permission</th>
+                    <th>User</th>
+                    <th>Group</th>
+                    <th>Others</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Read (4)</td>
+                    <td><label><input type="checkbox" name="read_user" value="4" onchange="updateResult()"> Read</label></td>
+                    <td><label><input type="checkbox" name="read_group" value="4" onchange="updateResult()"> Read</label></td>
+                    <td><label><input type="checkbox" name="read_others" value="4" onchange="updateResult()"> Read</label></td>
+                </tr>
+                <tr>
+                    <td>Write (2)</td>
+                    <td><label><input type="checkbox" name="write_user" value="2" onchange="updateResult()"> Write</label></td>
+                    <td><label><input type="checkbox" name="write_group" value="2" onchange="updateResult()"> Write</label></td>
+                    <td><label><input type="checkbox" name="write_others" value="2" onchange="updateResult()"> Write</label></td>
+                </tr>
+                <tr>
+                    <td>Execute (1)</td>
+                    <td><label><input type="checkbox" name="execute_user" value="1" onchange="updateResult()"> Execute</label></td>
+                    <td><label><input type="checkbox" name="execute_group" value="1" onchange="updateResult()"> Execute</label></td>
+                    <td><label><input type="checkbox" name="execute_others" value="1" onchange="updateResult()"> Execute</label></td>
+                </tr>
+            </tbody>
+        </table>
+        <br>
+    </form>
+    <h2 id="resultUser">User: Chmod 000 - Hiçbir izin yok ----</h2>
+    <h2 id="resultGroup">Group: Chmod 000 - Hiçbir izin yok ----</h2>
+    <h2 id="resultOthers">Others: Chmod 000 - Hiçbir izin yok ----</h2>
+    <h2 id="resultTotal">Total: Chmod 000 - --------</h2>
+
+    <button id="downloadButton" onclick="downloadChmod()">İndir</button>
+
+    <script>
+        function updateResult() {
+            var resultUser = calculateColumn('read_user', 'write_user', 'execute_user');
+            var resultGroup = calculateColumn('read_group', 'write_group', 'execute_group');
+            var resultOthers = calculateColumn('read_others', 'write_others', 'execute_others');
+
+            // "User" bölümünü kontrol et
+            if (!document.getElementsByName('read_user')[0].checked &&
+                !document.getElementsByName('write_user')[0].checked &&
+                !document.getElementsByName('execute_user')[0].checked) {
+                resultUser = 0;
+            }
+
+            // Ana sayıyı ve formatı hesapla
+            var resultTotal = resultUser * 100 + resultGroup * 10 + resultOthers;
+            var resultTotalFormatted = ('000' + resultTotal).slice(-3);
+
+            // Açıklama oluştur
+            var resultDescriptionUser = createResultDescription(resultUser);
+            var resultDescriptionGroup = createResultDescription(resultGroup);
+            var resultDescriptionOthers = createResultDescription(resultOthers);
+
+            // Total için açıklama oluştur
+            var resultDescriptionTotal = createResultDescription(resultUser) +
+                createResultDescription(resultGroup) +
+                createResultDescription(resultOthers);
+
+            // Sonucu göster
+            document.getElementById('resultUser').innerHTML = 'User: Chmod ' + ('00' + resultUser).slice(-3) + ' - ' + resultDescriptionUser;
+            document.getElementById('resultGroup').innerHTML = 'Group: Chmod ' + ('00' + resultGroup).slice(-3) + ' - ' + resultDescriptionGroup;
+            document.getElementById('resultOthers').innerHTML = 'Others: Chmod ' + ('00' + resultOthers).slice(-3) + ' - ' + resultDescriptionOthers;
+            document.getElementById('resultTotal').innerHTML = 'Total: Chmod ' + resultTotalFormatted + ' - ' + resultDescriptionTotal;
+        }
+
+        function calculateColumn(readId, writeId, executeId) {
+            var read = document.getElementsByName(readId)[0].checked ? parseInt(document.getElementsByName(readId)[0].value) : 0;
+            var write = document.getElementsByName(writeId)[0].checked ? parseInt(document.getElementsByName(writeId)[0].value) : 0;
+            var execute = document.getElementsByName(executeId)[0].checked ? parseInt(document.getElementsByName(executeId)[0].value) : 0;
+
+            return read + write + execute;
+        }
+
+        function createResultDescription(permission) {
+            var r = (permission & 4) ? 'r' : '-';
+            var w = (permission & 2) ? 'w' : '-';
+            var x = (permission & 1) ? 'x' : '-';
+            return r + w + x;
+        }
+
+        function downloadChmod() {
+            var resultUser = calculateColumn('read_user', 'write_user', 'execute_user');
+            var resultGroup = calculateColumn('read_group', 'write_group', 'execute_group');
+            var resultOthers = calculateColumn('read_others', 'write_others', 'execute_others');
+
+            // "User" bölümünü kontrol et
+            if (!document.getElementsByName('read_user')[0].checked &&
+                !document.getElementsByName('write_user')[0].checked &&
+                !document.getElementsByName('execute_user')[0].checked) {
+                resultUser = 0;
+            }
+
+            // Ana sayıyı ve formatı hesapla
+            var resultTotal = resultUser * 100 + resultGroup * 10 + resultOthers;
+            var resultTotalFormatted = ('000' + resultTotal).slice(-3);
+
+            // Açıklama oluştur
+            var resultDescriptionUser = createResultDescription(resultUser);
+            var resultDescriptionGroup = createResultDescription(resultGroup);
+            var resultDescriptionOthers = createResultDescription(resultOthers);
+
+            // Total için açıklama oluştur
+            var resultDescriptionTotal = createResultDescription(resultUser) +
+                createResultDescription(resultGroup) +
+                createResultDescription(resultOthers);
+
+            // Text dosyasına yaz
+            var textContent = 'User: Chmod ' + ('00' + resultUser).slice(-3) + ' - ' + resultDescriptionUser + '\n' +
+                'Group: Chmod ' + ('00' + resultGroup).slice(-3) + ' - ' + resultDescriptionGroup + '\n' +
+                'Others: Chmod ' + ('00' + resultOthers).slice(-3) + ' - ' + resultDescriptionOthers + '\n' +
+                'Total: Chmod ' + resultTotalFormatted + ' - ' + resultDescriptionTotal;
+
+            var blob = new Blob([textContent], { type: 'text/plain' });
+            var a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'chmod_result.txt';
+            a.style.display = 'none';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+    </script>
+</body>
+
+</html>
